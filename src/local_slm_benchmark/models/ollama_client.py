@@ -11,6 +11,15 @@ import httpx
 from local_slm_benchmark.models.schemas import GenerateRequest, GenerationResponse, GenerationTiming, schema_instructions
 
 
+class OllamaGenerationError(RuntimeError):
+    """Raised when Ollama rejects or fails a generation request."""
+
+    def __init__(self, message: str, status_code: int | None = None, elapsed_ms: float = 0.0) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+        self.elapsed_ms = elapsed_ms
+
+
 class OllamaClient:
     def __init__(self, host: str = "http://localhost:11434", timeout_seconds: float = 300.0) -> None:
         self.host = host.rstrip("/")
@@ -33,13 +42,28 @@ class OllamaClient:
         if request.system_prompt:
             payload["system"] = request.system_prompt
 
-        with httpx.Client(timeout=self.timeout_seconds) as client:
-            with client.stream("POST", f"{self.host}/api/generate", json=payload) as response:
-                response.raise_for_status()
-                for token in self._stream_response(response.iter_lines()):
-                    if first_token_at is None:
-                        first_token_at = time.perf_counter()
-                    chunks.append(token)
+        try:
+            with httpx.Client(timeout=self.timeout_seconds) as client:
+                with client.stream("POST", f"{self.host}/api/generate", json=payload) as response:
+                    response.raise_for_status()
+                    for token in self._stream_response(response.iter_lines()):
+                        if first_token_at is None:
+                            first_token_at = time.perf_counter()
+                        chunks.append(token)
+        except httpx.HTTPStatusError as exc:
+            elapsed_ms = (time.perf_counter() - started) * 1000
+            detail = exc.response.text.strip() or exc.response.reason_phrase
+            raise OllamaGenerationError(
+                f"Ollama returned HTTP {exc.response.status_code} for model '{request.model}': {detail}",
+                status_code=exc.response.status_code,
+                elapsed_ms=elapsed_ms,
+            ) from exc
+        except httpx.HTTPError as exc:
+            elapsed_ms = (time.perf_counter() - started) * 1000
+            raise OllamaGenerationError(
+                f"Ollama request failed for model '{request.model}': {exc}",
+                elapsed_ms=elapsed_ms,
+            ) from exc
 
         finished = time.perf_counter()
         raw_response = "".join(chunks)

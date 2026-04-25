@@ -88,13 +88,17 @@ def validate_prompts(
 def benchmark_run(
     limit: Annotated[int | None, typer.Option(help="Limit prompts for a smoke run.")] = None,
     runs_per_prompt: Annotated[int | None, typer.Option(help="Override repeat count.")] = None,
+    model: Annotated[
+        list[str] | None,
+        typer.Option("--model", help="Only benchmark this model. Can be provided more than once."),
+    ] = None,
 ) -> None:
     """Run the benchmark matrix."""
 
     from local_slm_benchmark.benchmark.runner import BenchmarkRunner
 
     runner = BenchmarkRunner()
-    output_path = runner.run(limit=limit, runs_per_prompt=runs_per_prompt)
+    output_path = runner.run(limit=limit, runs_per_prompt=runs_per_prompt, models=model)
     console.print(f"[green]Benchmark results written to {output_path}[/green]")
 
 

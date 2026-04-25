@@ -11,7 +11,7 @@ from rich.progress import Progress
 from local_slm_benchmark.benchmark.results import append_result, new_results_path
 from local_slm_benchmark.benchmark.system import capture_system_snapshot
 from local_slm_benchmark.config import BenchmarkConfig, ModelsConfig, load_benchmark_config, load_models_config
-from local_slm_benchmark.models.ollama_client import OllamaClient
+from local_slm_benchmark.models.ollama_client import OllamaClient, OllamaGenerationError
 from local_slm_benchmark.models.schemas import BenchmarkPrompt, BenchmarkResult, GenerateRequest, GenerationResponse
 from local_slm_benchmark.observability.logging import get_logger
 from local_slm_benchmark.observability.metrics import record_benchmark_result
@@ -45,9 +45,14 @@ class BenchmarkRunner:
         self.benchmark_config = benchmark_config or load_benchmark_config()
         self.client = client or OllamaClient(self.models_config.ollama_host)
 
-    def run(self, limit: int | None = None, runs_per_prompt: int | None = None) -> Path:
+    def run(
+        self,
+        limit: int | None = None,
+        runs_per_prompt: int | None = None,
+        models: list[str] | None = None,
+    ) -> Path:
         prompts = limit_prompts(load_prompts(self.benchmark_config.prompts_path), limit)
-        cases = self._build_cases(prompts, runs_per_prompt or self.benchmark_config.runs_per_prompt)
+        cases = self._build_cases(prompts, runs_per_prompt or self.benchmark_config.runs_per_prompt, models)
         output_path = new_results_path(self.benchmark_config.results_dir)
 
         with Progress() as progress:
@@ -66,7 +71,22 @@ class BenchmarkRunner:
             span.set_attribute("model.temperature", case.temperature)
             span.set_attribute("prompt.id", case.prompt.id)
             request = GenerateRequest(model=case.model, prompt=case.prompt.prompt, temperature=case.temperature)
-            generation = self.client.generate(request)
+            try:
+                generation = self.client.generate(request)
+            except OllamaGenerationError as exc:
+                result = self._error_result(case, exc)
+                record_benchmark_result(result)
+                span.set_attribute("response.valid_json", False)
+                span.set_attribute("error", True)
+                span.set_attribute("error.message", str(exc))
+                logger.warning(
+                    "benchmark_case_failed",
+                    model=result.model,
+                    temperature=result.temperature,
+                    prompt_id=result.prompt_id,
+                    error=result.final_failure,
+                )
+                return result
             validation = validate_assistant_response(generation.raw_response)
             retry_count = 0
             final_failure: str | None = None
@@ -76,9 +96,24 @@ class BenchmarkRunner:
             while not validation.valid_json and retry_count < self.benchmark_config.max_retries:
                 retry_count += 1
                 retry_prompt = build_retry_prompt(case.prompt.prompt, final_generation.raw_response, validation.errors)
-                final_generation = self.client.generate(
-                    GenerateRequest(model=case.model, prompt=retry_prompt, temperature=case.temperature)
-                )
+                try:
+                    final_generation = self.client.generate(
+                        GenerateRequest(model=case.model, prompt=retry_prompt, temperature=case.temperature)
+                    )
+                except OllamaGenerationError as exc:
+                    result = self._error_result(case, exc, retry_count=retry_count, elapsed_ms=total_latency_ms + exc.elapsed_ms)
+                    record_benchmark_result(result)
+                    span.set_attribute("response.valid_json", False)
+                    span.set_attribute("error", True)
+                    span.set_attribute("error.message", str(exc))
+                    logger.warning(
+                        "benchmark_case_failed",
+                        model=result.model,
+                        temperature=result.temperature,
+                        prompt_id=result.prompt_id,
+                        error=result.final_failure,
+                    )
+                    return result
                 total_latency_ms += final_generation.timing.total_latency_ms
                 validation = validate_assistant_response(final_generation.raw_response)
 
@@ -114,8 +149,17 @@ class BenchmarkRunner:
             )
             return result
 
-    def _build_cases(self, prompts: list[BenchmarkPrompt], runs_per_prompt: int) -> list[BenchmarkCase]:
-        models = [model.name for model in self.models_config.models]
+    def _build_cases(
+        self,
+        prompts: list[BenchmarkPrompt],
+        runs_per_prompt: int,
+        selected_models: list[str] | None = None,
+    ) -> list[BenchmarkCase]:
+        configured_models = [model.name for model in self.models_config.models]
+        models = selected_models or configured_models
+        unknown_models = sorted(set(models) - set(configured_models))
+        if unknown_models:
+            console.print(f"[yellow]Warning: models not present in config/models.yaml: {', '.join(unknown_models)}[/yellow]")
         return [
             BenchmarkCase(prompt=prompt, model=model, temperature=temperature, repeat_index=repeat_index)
             for model in models
@@ -123,6 +167,32 @@ class BenchmarkRunner:
             for prompt in prompts
             for repeat_index in range(1, runs_per_prompt + 1)
         ]
+
+    @staticmethod
+    def _error_result(
+        case: BenchmarkCase,
+        error: Exception,
+        retry_count: int = 0,
+        elapsed_ms: float | None = None,
+    ) -> BenchmarkResult:
+        return BenchmarkResult(
+            prompt_id=case.prompt.id,
+            prompt_category=case.prompt.category,
+            model=case.model,
+            temperature=case.temperature,
+            repeat_index=case.repeat_index,
+            raw_response="",
+            parsed_response=None,
+            reference_answer=case.prompt.reference_answer,
+            valid_json=False,
+            validation_errors=[str(error)],
+            retry_count=retry_count,
+            final_failure=str(error),
+            time_to_first_token_ms=None,
+            total_latency_ms=elapsed_ms if elapsed_ms is not None else getattr(error, "elapsed_ms", 0.0),
+            output_tokens=0,
+            tokens_per_second=0,
+        )
 
     @staticmethod
     def _to_result(
