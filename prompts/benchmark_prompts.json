@@ -7,6 +7,34 @@
     "reference_answer": "Local SLMs can improve privacy, reduce network latency, and allow experimentation on local hardware."
   },
   {
+    "id": "summarize_002",
+    "category": "summarization",
+    "prompt": "Summarize this incident update in two sentences: The benchmark run completed 720 generations. Two models had high JSON validity, but one model failed often at temperature 0.7. Latency increased during the final third of the run, likely because of thermal throttling.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "The benchmark completed 720 generations and showed strong JSON reliability for two models. One model degraded at temperature 0.7, and latency likely rose because of thermal throttling."
+  },
+  {
+    "id": "summarize_003",
+    "category": "summarization",
+    "prompt": "Create a concise executive summary of this finding: Mistral was slower than Llama on average, but produced more complete answers. Phi was fastest, but missed required JSON fields more often.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Mistral favored quality over speed, Phi favored speed over reliability, and Llama offered a more balanced result."
+  },
+  {
+    "id": "summarize_004",
+    "category": "summarization",
+    "prompt": "Summarize why time to first token matters for an interactive local AI assistant.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Time to first token affects perceived responsiveness because users see whether the assistant has started answering before the full response is complete."
+  },
+  {
+    "id": "summarize_005",
+    "category": "summarization",
+    "prompt": "Summarize this benchmark policy in one paragraph: Run all models on the same hardware, use the same prompt set, record latency and memory, validate JSON, and report limitations clearly.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "A fair benchmark keeps hardware, prompts, metrics, validation, and reporting consistent across models."
+  },
+  {
     "id": "classify_001",
     "category": "classification",
     "prompt": "Classify this user intent as one of: benchmark, troubleshooting, reporting. User: I want to compare latency across three local models.",
@@ -14,11 +42,347 @@
     "reference_answer": "benchmark"
   },
   {
+    "id": "classify_002",
+    "category": "classification",
+    "prompt": "Classify this issue as one of: model_missing, invalid_json, high_latency, report_generation. Issue: Ollama returned 404 when the benchmark tried to call mistral:7b.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "model_missing"
+  },
+  {
+    "id": "classify_003",
+    "category": "classification",
+    "prompt": "Classify this benchmark result as one of: reliable, unreliable, inconclusive. Result: 98 percent JSON validity, low retry rate, and stable latency across repeated runs.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "reliable"
+  },
+  {
+    "id": "classify_004",
+    "category": "classification",
+    "prompt": "Classify this prompt category as one of: summarization, extraction, reasoning, planning. Prompt: Identify the model name, temperature, and run count from a benchmark command.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "extraction"
+  },
+  {
+    "id": "classify_005",
+    "category": "classification",
+    "prompt": "Classify this dashboard panel as one of: performance, reliability, quality, system. Panel: JSON validation success rate by model and temperature.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "reliability"
+  },
+  {
     "id": "extract_001",
     "category": "extraction",
     "prompt": "Extract the model name and temperature from this text: Run llama3.2:3b at temperature 0.7 for the benchmark.",
     "expected_schema": "assistant_response",
     "reference_answer": "model=llama3.2:3b, temperature=0.7"
+  },
+  {
+    "id": "extract_002",
+    "category": "extraction",
+    "prompt": "Extract the benchmark parameters from this command: slm-benchmark benchmark run --model llama3.2:3b --limit 10 --runs-per-prompt 2.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "model=llama3.2:3b, limit=10, runs_per_prompt=2"
+  },
+  {
+    "id": "extract_003",
+    "category": "extraction",
+    "prompt": "Extract the metric names from this sentence: Track time_to_first_token_ms, total_latency_ms, tokens_per_second, retry_count, and memory_mb.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "time_to_first_token_ms, total_latency_ms, tokens_per_second, retry_count, memory_mb"
+  },
+  {
+    "id": "extract_004",
+    "category": "extraction",
+    "prompt": "Extract the failure cause from this log: HTTPStatusError 404 Not Found for http://localhost:11434/api/generate after requesting model phi4.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "The requested model phi4 was not available through Ollama."
+  },
+  {
+    "id": "extract_005",
+    "category": "extraction",
+    "prompt": "Extract the report file path from this message: Report written to E:\\AI-Workstuff\\Projects\\Benchmarking\\reports\\model-comparison-20260425T202627Z.md.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "E:\\AI-Workstuff\\Projects\\Benchmarking\\reports\\model-comparison-20260425T202627Z.md"
+  },
+  {
+    "id": "reasoning_001",
+    "category": "reasoning",
+    "prompt": "A model has lower average latency but twice the retry rate of another model. Explain which tradeoff matters more for a structured-output assistant.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Reliability may matter more because retries can erase latency gains and structured-output failures can break downstream automation."
+  },
+  {
+    "id": "reasoning_002",
+    "category": "reasoning",
+    "prompt": "If temperature 0.7 produces higher quality but lower JSON validity than temperature 0, explain how you would choose a default.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Choose based on product needs; for structured automation, temperature 0 is safer, while creative tasks may justify 0.7 with retries."
+  },
+  {
+    "id": "reasoning_003",
+    "category": "reasoning",
+    "prompt": "Why should a benchmark use the same prompt set for every model?",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Using the same prompts controls the workload so differences are more likely caused by model behavior rather than test variation."
+  },
+  {
+    "id": "reasoning_004",
+    "category": "reasoning",
+    "prompt": "Explain why p95 latency can be more useful than average latency for an assistant.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "P95 latency shows slow-tail behavior that users notice, while averages can hide occasional poor response times."
+  },
+  {
+    "id": "reasoning_005",
+    "category": "reasoning",
+    "prompt": "A benchmark run records high tokens per second but poor time to first token. Explain what the user experience might feel like.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "The assistant may feel slow to start, then fast once output begins."
+  },
+  {
+    "id": "coding_001",
+    "category": "coding",
+    "prompt": "Write a short Python function conceptually describing how to compute tokens per second from output_tokens and total_latency_ms.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "tokens_per_second equals output_tokens divided by total_latency_ms converted to seconds."
+  },
+  {
+    "id": "coding_002",
+    "category": "coding",
+    "prompt": "Explain how a Pydantic model helps validate JSON returned by a local language model.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Pydantic parses the JSON into typed fields and reports validation errors when required fields or types do not match."
+  },
+  {
+    "id": "coding_003",
+    "category": "coding",
+    "prompt": "Describe a safe retry strategy when model output is not valid JSON.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Capture the validation error, send a correction prompt with the required schema, limit retries, and record retry count and final failure."
+  },
+  {
+    "id": "coding_004",
+    "category": "coding",
+    "prompt": "Explain why JSONL is a practical format for benchmark results.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "JSONL is append-friendly, easy to stream, and lets each benchmark result be stored as one independent structured row."
+  },
+  {
+    "id": "coding_005",
+    "category": "coding",
+    "prompt": "Describe how a CLI command can make benchmark runs reproducible.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "A CLI exposes explicit model, prompt, temperature, and repeat-count options that can be rerun and documented."
+  },
+  {
+    "id": "transformation_001",
+    "category": "transformation",
+    "prompt": "Rewrite this into a concise technical note: The model was kind of slow at first but then it started generating pretty quickly after the first token showed up.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "The model had high time to first token but acceptable generation throughput after streaming began."
+  },
+  {
+    "id": "transformation_002",
+    "category": "transformation",
+    "prompt": "Convert this sentence into a benchmark recommendation: Phi is very fast, but it sometimes ignores the requested JSON shape.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Use Phi only when speed matters more than structured-output reliability, or add stricter validation and retries."
+  },
+  {
+    "id": "transformation_003",
+    "category": "transformation",
+    "prompt": "Rewrite this user-facing message in a calmer tone: Your model is missing, so the benchmark blew up.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "The benchmark could not run that model because it is not currently available in Ollama."
+  },
+  {
+    "id": "transformation_004",
+    "category": "transformation",
+    "prompt": "Turn this into a clear report limitation: I only tested it on my laptop and not the final machine.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Results were collected on a laptop and may not reflect performance on the final target hardware."
+  },
+  {
+    "id": "transformation_005",
+    "category": "transformation",
+    "prompt": "Rewrite this as a precise metric definition: How long it takes before the first word appears.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Time to first token measures the elapsed time between submitting a prompt and receiving the first streamed token."
+  },
+  {
+    "id": "planning_001",
+    "category": "planning",
+    "prompt": "Create a three-step plan for moving from a smoke benchmark to a full model comparison.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Validate the smoke path, expand prompts and models, then run the full matrix and generate the report."
+  },
+  {
+    "id": "planning_002",
+    "category": "planning",
+    "prompt": "Create a short checklist for preparing a powerful machine to run the full benchmark.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Install dependencies, install Ollama, pull models, verify prompts, run a smoke test, then run the full benchmark."
+  },
+  {
+    "id": "planning_003",
+    "category": "planning",
+    "prompt": "Plan how to investigate a sudden increase in p95 latency during a benchmark.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Check system load, memory pressure, thermal throttling, model order, prompt categories, and per-run logs."
+  },
+  {
+    "id": "planning_004",
+    "category": "planning",
+    "prompt": "Suggest a rollout plan for adding Grafana dashboards after the CLI benchmark works.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Expose Prometheus metrics, configure scraping, import a dashboard, verify live metrics, then add analysis panels."
+  },
+  {
+    "id": "planning_005",
+    "category": "planning",
+    "prompt": "Create a plan for improving JSON reliability if a model fails validation too often.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Tighten prompt instructions, lower temperature, improve retry prompts, reduce schema complexity, and compare another model."
+  },
+  {
+    "id": "safety_001",
+    "category": "safety",
+    "prompt": "Explain why local model benchmarking can be useful for privacy-sensitive workflows.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Local benchmarking avoids sending prompts and outputs to external services, which can help protect sensitive data."
+  },
+  {
+    "id": "safety_002",
+    "category": "safety",
+    "prompt": "Identify one privacy risk that still exists when using a local model benchmark.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Sensitive prompts and outputs may still be written to local logs, results, or reports."
+  },
+  {
+    "id": "safety_003",
+    "category": "safety",
+    "prompt": "Explain why benchmark reports should document whether a quality judge model is local or cloud-based.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "A cloud judge may send benchmark data outside the local environment, changing the privacy assumptions."
+  },
+  {
+    "id": "safety_004",
+    "category": "safety",
+    "prompt": "Give a safe handling recommendation for benchmark result files that contain user prompts.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Treat result files as sensitive artifacts and avoid sharing them unless prompts and outputs have been reviewed or redacted."
+  },
+  {
+    "id": "safety_005",
+    "category": "safety",
+    "prompt": "Explain why structured output validation is a safety measure for automation.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Validation prevents malformed or unexpected model output from flowing unchecked into downstream systems."
+  },
+  {
+    "id": "reporting_001",
+    "category": "reporting",
+    "prompt": "Write a concise report finding for this result: Llama averaged 5.2 seconds latency, 35 tokens per second, and 100 percent JSON validity.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Llama delivered reliable structured output with moderate latency and acceptable throughput."
+  },
+  {
+    "id": "reporting_002",
+    "category": "reporting",
+    "prompt": "Write a report limitation for a benchmark that used only three prompts.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "The prompt set is too small to support broad conclusions about model quality or reliability."
+  },
+  {
+    "id": "reporting_003",
+    "category": "reporting",
+    "prompt": "Write a recommendation when one model has the best quality score but worst latency.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Use the model for quality-sensitive offline tasks, but prefer a faster model for interactive workflows."
+  },
+  {
+    "id": "reporting_004",
+    "category": "reporting",
+    "prompt": "Write a dashboard caption for a panel showing retry rate by model.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Retry rate shows how often each model failed the initial structured-output validation and required correction."
+  },
+  {
+    "id": "reporting_005",
+    "category": "reporting",
+    "prompt": "Write a concise executive summary sentence for a benchmark where all models are accurate but one is much faster.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "All tested models produced acceptable answers, but the fastest model is the strongest candidate for interactive local use."
+  },
+  {
+    "id": "observability_001",
+    "category": "observability",
+    "prompt": "Explain the difference between a trace and a metric in this benchmark project.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "A trace shows the steps of one prompt run, while a metric aggregates numeric behavior such as latency or retry counts over many runs."
+  },
+  {
+    "id": "observability_002",
+    "category": "observability",
+    "prompt": "Suggest three Grafana panels for monitoring a live benchmark run.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Latency over time, tokens per second by model, and JSON validation failures by model."
+  },
+  {
+    "id": "observability_003",
+    "category": "observability",
+    "prompt": "Explain why post-run analysis metrics should be exported separately from live runtime metrics.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Post-run metrics depend on completed analysis such as aggregation, variance, and quality scoring, while runtime metrics are emitted during generation."
+  },
+  {
+    "id": "observability_004",
+    "category": "observability",
+    "prompt": "Explain why structured logs are useful when a benchmark case fails.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Structured logs preserve model, prompt, temperature, error, and timing fields so failures can be filtered and diagnosed."
+  },
+  {
+    "id": "observability_005",
+    "category": "observability",
+    "prompt": "Describe what an OpenTelemetry span for one model generation should include.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "It should include model, temperature, prompt ID, latency, validation status, retry count, and error details if present."
+  },
+  {
+    "id": "comparison_001",
+    "category": "comparison",
+    "prompt": "Compare speed and reliability as model selection criteria for a local assistant.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Speed improves responsiveness, while reliability ensures outputs can be used safely by downstream systems; the best model balances both."
+  },
+  {
+    "id": "comparison_002",
+    "category": "comparison",
+    "prompt": "Compare average latency and p95 latency in one concise explanation.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Average latency shows typical performance, while p95 latency captures slower tail cases that may affect user experience."
+  },
+  {
+    "id": "comparison_003",
+    "category": "comparison",
+    "prompt": "Compare temperature 0 and temperature 0.7 for structured JSON tasks.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Temperature 0 is usually more deterministic and reliable, while 0.7 may be more varied but riskier for strict JSON."
+  },
+  {
+    "id": "comparison_004",
+    "category": "comparison",
+    "prompt": "Compare a Markdown report and a Grafana dashboard as benchmark outputs.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "A Markdown report is best for final review and recommendations, while Grafana is best for live monitoring and visual metric exploration."
+  },
+  {
+    "id": "comparison_005",
+    "category": "comparison",
+    "prompt": "Compare local-only evaluation with using a cloud judge model.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Local evaluation preserves privacy but may be less sophisticated, while a cloud judge may improve scoring quality but changes privacy assumptions."
   }
 ]
 
