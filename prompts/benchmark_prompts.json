@@ -1,0 +1,24 @@
+[
+  {
+    "id": "summarize_001",
+    "category": "summarization",
+    "prompt": "Summarize the benefits of running a small language model locally in exactly three bullet points.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "Local SLMs can improve privacy, reduce network latency, and allow experimentation on local hardware."
+  },
+  {
+    "id": "classify_001",
+    "category": "classification",
+    "prompt": "Classify this user intent as one of: benchmark, troubleshooting, reporting. User: I want to compare latency across three local models.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "benchmark"
+  },
+  {
+    "id": "extract_001",
+    "category": "extraction",
+    "prompt": "Extract the model name and temperature from this text: Run llama3.2:3b at temperature 0.7 for the benchmark.",
+    "expected_schema": "assistant_response",
+    "reference_answer": "model=llama3.2:3b, temperature=0.7"
+  }
+]
+

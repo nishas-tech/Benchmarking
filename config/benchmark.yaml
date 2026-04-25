@@ -1,0 +1,10 @@
+temperatures:
+  - 0.0
+  - 0.7
+runs_per_prompt: 3
+max_retries: 1
+prompts_path: "prompts/benchmark_prompts.json"
+results_dir: "results"
+reports_dir: "reports"
+default_response_schema: "assistant_response"
+
