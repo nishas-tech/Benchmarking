@@ -52,7 +52,7 @@ class OllamaClient:
                         chunks.append(token)
         except httpx.HTTPStatusError as exc:
             elapsed_ms = (time.perf_counter() - started) * 1000
-            detail = exc.response.text.strip() or exc.response.reason_phrase
+            detail = self._response_detail(exc.response)
             raise OllamaGenerationError(
                 f"Ollama returned HTTP {exc.response.status_code} for model '{request.model}': {detail}",
                 status_code=exc.response.status_code,
@@ -103,4 +103,13 @@ class OllamaClient:
     def _estimate_tokens(text: str) -> int:
         # Good enough for relative local benchmarks when tokenizer details vary by model.
         return max(1, len(text.split())) if text else 0
+
+    @staticmethod
+    def _response_detail(response: httpx.Response) -> str:
+        try:
+            response.read()
+            detail = response.text.strip()
+        except Exception:
+            detail = ""
+        return detail or response.reason_phrase or "unknown error"
 
