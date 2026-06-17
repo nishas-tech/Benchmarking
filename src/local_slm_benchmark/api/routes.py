@@ -8,6 +8,7 @@ from local_slm_benchmark.config import load_models_config
 from local_slm_benchmark.models.ollama_client import OllamaClient
 from local_slm_benchmark.models.schemas import GenerateRequest
 from local_slm_benchmark.observability.metrics import prometheus_payload, record_generation
+from local_slm_benchmark.observability.persistent_metrics import METRICS_PATH, load_persisted_metrics
 from local_slm_benchmark.validation.parser import validate_assistant_response
 
 
@@ -41,4 +42,15 @@ def generate(request: GenerateRequest) -> dict:
 def metrics() -> Response:
     payload, content_type = prometheus_payload()
     return Response(content=payload, media_type=content_type)
+
+
+@router.get("/metrics/status")
+def metrics_status() -> dict:
+    payload = load_persisted_metrics()
+    return {
+        "metrics_file": str(METRICS_PATH),
+        "metrics_file_exists": METRICS_PATH.exists(),
+        "runtime_series": len(payload.get("runtime", {})),
+        "analysis_series": len(payload.get("analysis", [])),
+    }
 

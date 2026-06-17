@@ -11,6 +11,7 @@ import pandas as pd
 from local_slm_benchmark.benchmark.results import latest_results_file
 from local_slm_benchmark.config import load_benchmark_config, project_path
 from local_slm_benchmark.observability.analysis_exporter import export_analysis_metrics
+from local_slm_benchmark.observability.persistent_metrics import persist_analysis_summary
 from local_slm_benchmark.reporting.analysis import AnalysisOutput, analyze_results
 
 
@@ -22,6 +23,7 @@ def generate_report(results_path: str | Path | None = None) -> Path:
 
     analysis = analyze_results(selected_results)
     export_analysis_metrics(analysis.summary)
+    persist_analysis_summary(analysis.summary)
 
     reports_dir = project_path(config.reports_dir)
     charts_dir = reports_dir / "charts"

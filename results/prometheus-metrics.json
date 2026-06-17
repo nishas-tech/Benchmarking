@@ -1,0 +1,53 @@
+{
+  "runtime": {},
+  "analysis": [
+    {
+      "model": "mistral:7b",
+      "temperature": "0",
+      "average_latency_ms": 3373.1923482234406,
+      "p95_latency_ms": 10567.28564199875,
+      "average_tokens_per_second": 19.651984642522336,
+      "average_memory_mb": 105.94422348484848,
+      "json_validation_success_rate": 0.9818181818181818,
+      "retry_rate": 0.23636363636363636,
+      "quality_score": 0.3498186203561636,
+      "output_variance_score": 0.024242424242424242
+    },
+    {
+      "model": "mistral:7b",
+      "temperature": "0.7",
+      "average_latency_ms": 3620.7673017284833,
+      "p95_latency_ms": 12432.533958222482,
+      "average_tokens_per_second": 22.519996537783786,
+      "average_memory_mb": 112.22509469696969,
+      "json_validation_success_rate": 0.9454545454545454,
+      "retry_rate": 0.24848484848484848,
+      "quality_score": 0.35134582870813047,
+      "output_variance_score": 1.3212121212121213
+    },
+    {
+      "model": "phi4",
+      "temperature": "0",
+      "average_latency_ms": 4864.990122927437,
+      "p95_latency_ms": 12544.300641608397,
+      "average_tokens_per_second": 14.941212975259397,
+      "average_memory_mb": 112.65833333333333,
+      "json_validation_success_rate": 1.0,
+      "retry_rate": 0.0,
+      "quality_score": 0.4652512025653828,
+      "output_variance_score": 0.07272727272727272
+    },
+    {
+      "model": "phi4",
+      "temperature": "0.7",
+      "average_latency_ms": 5824.572346436925,
+      "p95_latency_ms": 15124.76627480937,
+      "average_tokens_per_second": 13.98004794638178,
+      "average_memory_mb": 112.86458333333333,
+      "json_validation_success_rate": 1.0,
+      "retry_rate": 0.01818181818181818,
+      "quality_score": 0.46024936413184553,
+      "output_variance_score": 2.0484848484848484
+    }
+  ]
+}

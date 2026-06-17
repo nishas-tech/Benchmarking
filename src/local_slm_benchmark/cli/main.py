@@ -22,9 +22,11 @@ app = typer.Typer(help="Local SLM benchmarking assistant.")
 prompts_app = typer.Typer(help="Prompt file utilities.")
 benchmark_app = typer.Typer(help="Benchmark commands.")
 report_app = typer.Typer(help="Report commands.")
+metrics_app = typer.Typer(help="Metrics export commands.")
 app.add_typer(prompts_app, name="prompts")
 app.add_typer(benchmark_app, name="benchmark")
 app.add_typer(report_app, name="report")
+app.add_typer(metrics_app, name="metrics")
 
 
 @app.command()
@@ -72,6 +74,19 @@ def generate(
             console.print(f"- {error}")
 
 
+@app.command()
+def serve(
+    host: Annotated[str, typer.Option(help="FastAPI host.")] = "0.0.0.0",
+    port: Annotated[int, typer.Option(help="FastAPI port.")] = 8000,
+    reload: Annotated[bool, typer.Option(help="Enable Uvicorn reload.")] = False,
+) -> None:
+    """Start the FastAPI app that exposes /generate and /metrics."""
+
+    import uvicorn
+
+    uvicorn.run("local_slm_benchmark.api.app:app", host=host, port=port, reload=reload)
+
+
 @prompts_app.command("validate")
 def validate_prompts(
     path: Annotated[Path | None, typer.Option(help="Prompt JSON file path.")] = None,
@@ -112,6 +127,28 @@ def report_generate(
 
     report_path = generate_report(results_path=results)
     console.print(f"[green]Report written to {report_path}[/green]")
+
+
+@metrics_app.command("export")
+def metrics_export(
+    results: Annotated[Path | None, typer.Option(help="Results JSONL file. Defaults to latest result file.")] = None,
+) -> None:
+    """Export saved benchmark results into the Prometheus metrics bridge."""
+
+    from local_slm_benchmark.benchmark.results import latest_results_file
+    from local_slm_benchmark.config import load_benchmark_config
+    from local_slm_benchmark.observability.persistent_metrics import METRICS_PATH, persist_analysis_summary
+    from local_slm_benchmark.reporting.analysis import analyze_results
+
+    config = load_benchmark_config()
+    selected_results = results or latest_results_file(config.results_dir)
+    if selected_results is None:
+        raise typer.BadParameter("No benchmark result files found.")
+
+    analysis = analyze_results(selected_results)
+    persist_analysis_summary(analysis.summary)
+    console.print(f"[green]Exported analysis metrics from {selected_results}[/green]")
+    console.print(f"Metrics bridge file: {METRICS_PATH}")
 
 
 if __name__ == "__main__":

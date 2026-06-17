@@ -1,0 +1,21 @@
+groups:
+  - name: local-slm-benchmark
+    interval: 5s
+    rules:
+      - record: slm:average_latency_ms
+        expr: slm_average_latency_ms
+      - record: slm:p95_latency_ms
+        expr: slm_p95_latency_ms
+      - record: slm:average_tokens_per_second
+        expr: slm_average_tokens_per_second
+      - record: slm:average_memory_mb
+        expr: slm_average_memory_mb
+      - record: slm:json_validation_success_rate
+        expr: slm_json_validation_success_rate
+      - record: slm:retry_rate
+        expr: slm_retry_rate
+      - record: slm:quality_score
+        expr: slm_quality_score
+      - record: slm:output_variance_score
+        expr: slm_output_variance_score
+

@@ -34,18 +34,26 @@ AVERAGE_MEMORY_MB = Gauge("slm_average_memory_mb", "Average process memory in MB
 
 def export_analysis_metrics(summary: pd.DataFrame) -> None:
     for row in summary.to_dict(orient="records"):
-        model = str(row["model"])
-        temperature = label_temperature(float(row["temperature"]))
-        labels = (model, temperature)
+        _export_analysis_row(row, temperature=label_temperature(float(row["temperature"])))
 
-        _set_if_number(AVERAGE_LATENCY.labels(*labels), row.get("average_latency_ms"))
-        _set_if_number(P95_LATENCY.labels(*labels), row.get("p95_latency_ms"))
-        _set_if_number(AVERAGE_TOKENS_PER_SECOND.labels(*labels), row.get("average_tokens_per_second"))
-        _set_if_number(AVERAGE_MEMORY_MB.labels(*labels), row.get("average_memory_mb"))
-        _set_if_number(JSON_SUCCESS_RATE.labels(*labels), row.get("json_validation_success_rate"))
-        _set_if_number(RETRY_RATE.labels(*labels), row.get("retry_rate"))
-        _set_if_number(QUALITY_SCORE.labels(*labels), row.get("quality_score"))
-        _set_if_number(OUTPUT_VARIANCE_SCORE.labels(*labels), row.get("output_variance_score"))
+
+def export_analysis_payload(rows: list[dict]) -> None:
+    for row in rows:
+        _export_analysis_row(row, temperature=str(row["temperature"]))
+
+
+def _export_analysis_row(row: dict, temperature: str) -> None:
+    model = str(row["model"])
+    labels = (model, temperature)
+
+    _set_if_number(AVERAGE_LATENCY.labels(*labels), row.get("average_latency_ms"))
+    _set_if_number(P95_LATENCY.labels(*labels), row.get("p95_latency_ms"))
+    _set_if_number(AVERAGE_TOKENS_PER_SECOND.labels(*labels), row.get("average_tokens_per_second"))
+    _set_if_number(AVERAGE_MEMORY_MB.labels(*labels), row.get("average_memory_mb"))
+    _set_if_number(JSON_SUCCESS_RATE.labels(*labels), row.get("json_validation_success_rate"))
+    _set_if_number(RETRY_RATE.labels(*labels), row.get("retry_rate"))
+    _set_if_number(QUALITY_SCORE.labels(*labels), row.get("quality_score"))
+    _set_if_number(OUTPUT_VARIANCE_SCORE.labels(*labels), row.get("output_variance_score"))
 
 
 def _set_if_number(gauge, value: object) -> None:

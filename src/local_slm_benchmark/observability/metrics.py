@@ -42,6 +42,31 @@ PROCESS_MEMORY_MB = Gauge(
     "Benchmark process resident memory in MB.",
     ["model", "temperature"],
 )
+PERSISTED_BENCHMARK_RUNS = Gauge(
+    "slm_persisted_benchmark_runs_total",
+    "Persisted benchmark cases completed by CLI runs.",
+    ["model", "temperature"],
+)
+PERSISTED_JSON_VALIDATION_FAILURES = Gauge(
+    "slm_persisted_json_validation_failures_total",
+    "Persisted JSON validation failures from CLI runs.",
+    ["model", "temperature"],
+)
+PERSISTED_RETRIES = Gauge(
+    "slm_persisted_retries_total",
+    "Persisted structured-output retries from CLI runs.",
+    ["model", "temperature"],
+)
+PERSISTED_LATEST_GENERATION_LATENCY = Gauge(
+    "slm_persisted_latest_generation_latency_ms",
+    "Latest persisted generation latency from CLI runs.",
+    ["model", "temperature"],
+)
+PERSISTED_LATEST_TTFT = Gauge(
+    "slm_persisted_latest_time_to_first_token_ms",
+    "Latest persisted time to first token from CLI runs.",
+    ["model", "temperature"],
+)
 
 
 def label_temperature(temperature: float) -> str:
@@ -74,5 +99,27 @@ def record_benchmark_result(result: BenchmarkResult) -> None:
 
 
 def prometheus_payload() -> tuple[bytes, str]:
+    refresh_persisted_metrics()
     return generate_latest(), CONTENT_TYPE_LATEST
+
+
+def refresh_persisted_metrics() -> None:
+    from local_slm_benchmark.observability.analysis_exporter import export_analysis_payload
+    from local_slm_benchmark.observability.persistent_metrics import load_persisted_metrics
+
+    payload = load_persisted_metrics()
+    for row in payload.get("runtime", {}).values():
+        model = str(row["model"])
+        temperature = str(row["temperature"])
+        labels = (model, temperature)
+        PERSISTED_BENCHMARK_RUNS.labels(*labels).set(float(row.get("benchmark_runs_total", 0)))
+        PERSISTED_JSON_VALIDATION_FAILURES.labels(*labels).set(float(row.get("json_validation_failures_total", 0)))
+        PERSISTED_RETRIES.labels(*labels).set(float(row.get("retries_total", 0)))
+        PERSISTED_LATEST_GENERATION_LATENCY.labels(*labels).set(float(row.get("latest_generation_latency_ms", 0)))
+        PERSISTED_LATEST_TTFT.labels(*labels).set(float(row.get("latest_time_to_first_token_ms") or 0))
+        TOKENS_PER_SECOND.labels(*labels).set(float(row.get("latest_tokens_per_second", 0)))
+        if row.get("latest_process_memory_mb") is not None:
+            PROCESS_MEMORY_MB.labels(*labels).set(float(row["latest_process_memory_mb"]))
+
+    export_analysis_payload(payload.get("analysis", []))
 

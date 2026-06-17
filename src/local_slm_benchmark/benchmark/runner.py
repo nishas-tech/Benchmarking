@@ -15,6 +15,7 @@ from local_slm_benchmark.models.ollama_client import OllamaClient, OllamaGenerat
 from local_slm_benchmark.models.schemas import BenchmarkPrompt, BenchmarkResult, GenerateRequest, GenerationResponse
 from local_slm_benchmark.observability.logging import get_logger
 from local_slm_benchmark.observability.metrics import record_benchmark_result
+from local_slm_benchmark.observability.persistent_metrics import record_persisted_benchmark_result
 from local_slm_benchmark.observability.tracing import get_tracer
 from local_slm_benchmark.prompts import limit_prompts, load_prompts
 from local_slm_benchmark.validation.parser import validate_assistant_response
@@ -76,6 +77,7 @@ class BenchmarkRunner:
             except OllamaGenerationError as exc:
                 result = self._error_result(case, exc)
                 record_benchmark_result(result)
+                record_persisted_benchmark_result(result)
                 span.set_attribute("response.valid_json", False)
                 span.set_attribute("error", True)
                 span.set_attribute("error.message", str(exc))
@@ -103,6 +105,7 @@ class BenchmarkRunner:
                 except OllamaGenerationError as exc:
                     result = self._error_result(case, exc, retry_count=retry_count, elapsed_ms=total_latency_ms + exc.elapsed_ms)
                     record_benchmark_result(result)
+                    record_persisted_benchmark_result(result)
                     span.set_attribute("response.valid_json", False)
                     span.set_attribute("error", True)
                     span.set_attribute("error.message", str(exc))
@@ -135,6 +138,7 @@ class BenchmarkRunner:
                 memory_percent=system.memory_percent,
             )
             record_benchmark_result(result)
+            record_persisted_benchmark_result(result)
             span.set_attribute("response.valid_json", result.valid_json)
             span.set_attribute("response.retry_count", result.retry_count)
             span.set_attribute("latency.total_ms", result.total_latency_ms)

@@ -2,83 +2,148 @@
   "title": "Local SLM Benchmarking",
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
-  "refresh": "5s",
+  "version": 2,
+  "refresh": "30s",
+  "uid": "local-slm-benchmarking",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
   "panels": [
     {
-      "type": "timeseries",
-      "title": "Generation Latency",
-      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.95, sum(rate(slm_generation_latency_ms_bucket[5m])) by (le, model, temperature))",
-          "legendFormat": "p95 {{model}} temp={{temperature}}"
-        }
-      ]
+      "type": "text",
+      "title": "How To Read This Dashboard",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 3 },
+      "options": {
+        "mode": "markdown",
+        "content": "Post-run model comparison from Prometheus analysis metrics. Lower is better for latency, retry rate, memory, and variance. Higher is better for throughput, JSON success rate, and quality score."
+      }
     },
     {
-      "type": "timeseries",
-      "title": "Tokens Per Second",
-      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "type": "bargauge",
+      "title": "Average Latency (lower is better)",
+      "gridPos": { "x": 0, "y": 3, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "ms", "decimals": 0 }, "overrides": [] },
+      "options": { "displayMode": "basic", "orientation": "horizontal", "showUnfilled": true },
       "targets": [
         {
-          "expr": "slm_tokens_per_second",
-          "legendFormat": "{{model}} temp={{temperature}}"
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "slm_average_latency_ms",
+          "legendFormat": "{{model}} temp={{temperature}}",
+          "instant": true
         }
       ]
     },
     {
       "type": "bargauge",
-      "title": "JSON Validation Success Rate",
-      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
+      "title": "P95 Latency (slow-tail response)",
+      "gridPos": { "x": 12, "y": 3, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "ms", "decimals": 0 }, "overrides": [] },
+      "options": { "displayMode": "basic", "orientation": "horizontal", "showUnfilled": true },
       "targets": [
         {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "slm_p95_latency_ms",
+          "legendFormat": "{{model}} temp={{temperature}}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "Average Tokens Per Second (higher is better)",
+      "gridPos": { "x": 0, "y": 10, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "ops", "decimals": 1 }, "overrides": [] },
+      "options": { "displayMode": "basic", "orientation": "horizontal", "showUnfilled": true },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "slm_average_tokens_per_second",
+          "legendFormat": "{{model}} temp={{temperature}}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "Average Memory MB (lower is better)",
+      "gridPos": { "x": 12, "y": 10, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "MB", "decimals": 1 }, "overrides": [] },
+      "options": { "displayMode": "basic", "orientation": "horizontal", "showUnfilled": true },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "slm_average_memory_mb",
+          "legendFormat": "{{model}} temp={{temperature}}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "JSON Validation Success Rate (higher is better)",
+      "gridPos": { "x": 0, "y": 17, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1, "decimals": 3 }, "overrides": [] },
+      "options": { "displayMode": "basic", "orientation": "horizontal", "showUnfilled": true },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "slm_json_validation_success_rate",
-          "legendFormat": "{{model}} temp={{temperature}}"
+          "legendFormat": "{{model}} temp={{temperature}}",
+          "instant": true
         }
       ]
     },
     {
       "type": "bargauge",
-      "title": "Quality Score",
-      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
+      "title": "Retry Rate (lower is better)",
+      "gridPos": { "x": 12, "y": 17, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1, "decimals": 3 }, "overrides": [] },
+      "options": { "displayMode": "basic", "orientation": "horizontal", "showUnfilled": true },
       "targets": [
         {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "slm_retry_rate",
+          "legendFormat": "{{model}} temp={{temperature}}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "Quality Score (higher is better)",
+      "gridPos": { "x": 0, "y": 24, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1, "decimals": 3 }, "overrides": [] },
+      "options": { "displayMode": "basic", "orientation": "horizontal", "showUnfilled": true },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "slm_quality_score",
-          "legendFormat": "{{model}} temp={{temperature}}"
+          "legendFormat": "{{model}} temp={{temperature}}",
+          "instant": true
         }
       ]
     },
     {
       "type": "bargauge",
-      "title": "Output Variance",
-      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 8 },
+      "title": "Output Variance (lower is more deterministic)",
+      "gridPos": { "x": 12, "y": 24, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "decimals": 2 }, "overrides": [] },
+      "options": { "displayMode": "basic", "orientation": "horizontal", "showUnfilled": true },
       "targets": [
         {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "slm_output_variance_score",
-          "legendFormat": "{{model}} temp={{temperature}}"
-        }
-      ]
-    },
-    {
-      "type": "timeseries",
-      "title": "Memory Usage",
-      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
-      "targets": [
-        {
-          "expr": "slm_process_memory_mb",
-          "legendFormat": "{{model}} temp={{temperature}}"
-        }
-      ]
-    },
-    {
-      "type": "timeseries",
-      "title": "Retries",
-      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
-      "targets": [
-        {
-          "expr": "increase(slm_retries_total[5m])",
-          "legendFormat": "{{model}} temp={{temperature}}"
+          "legendFormat": "{{model}} temp={{temperature}}",
+          "instant": true
         }
       ]
     }

@@ -55,6 +55,55 @@ To benchmark only the models installed on your machine, pass one or more `--mode
 slm-benchmark benchmark run --model llama3.2:3b --model mistral:7b --runs-per-prompt 3
 ```
 
+## Metrics And Dashboards
+
+Start the FastAPI metrics endpoint in one terminal:
+
+```bash
+slm-benchmark serve --host 0.0.0.0 --port 8000
+```
+
+Start Prometheus and Grafana in another terminal:
+
+```bash
+docker compose -f docker-compose.observability.yml up
+```
+
+Open the dashboards:
+
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3000`
+- Grafana login: `admin` / `admin`
+- Dashboard: `Local SLM Benchmarking`
+
+Prometheus scrapes FastAPI at `http://host.docker.internal:8000/metrics`. The benchmark CLI also writes persisted metric snapshots to `results/prometheus-metrics.json`, and the FastAPI `/metrics` endpoint exposes those snapshots so Grafana can show CLI-produced runtime metrics and post-run analysis metrics.
+
+Prometheus does not auto-render a dashboard on the query page. Use Grafana for the visual dashboard, or open the ready-made Prometheus query links in `dashboards/prometheus-queries.md`.
+
+Recommended dashboard flow:
+
+```bash
+slm-benchmark serve --host 0.0.0.0 --port 8000
+docker compose -f docker-compose.observability.yml up
+slm-benchmark benchmark run --model llama3.2:3b --limit 2 --runs-per-prompt 1
+slm-benchmark report generate
+```
+
+If you already have a benchmark JSONL file and want to populate Grafana without rerunning the benchmark, export the saved results into the metrics bridge:
+
+```bash
+slm-benchmark metrics export --results results/benchmark-YYYYMMDDTHHMMSSZ.jsonl
+```
+
+Verify the metrics endpoint:
+
+```bash
+curl http://localhost:8000/metrics/status
+curl http://localhost:8000/metrics
+```
+
+In Prometheus, check `Status > Targets`. The `local-slm-benchmark` target should be `UP`. If it is down, make sure `slm-benchmark serve --host 0.0.0.0 --port 8000` is still running.
+
 ## Main Commands
 
 - `slm-benchmark env`: print local environment information.
@@ -62,4 +111,6 @@ slm-benchmark benchmark run --model llama3.2:3b --model mistral:7b --runs-per-pr
 - `slm-benchmark generate`: run one prompt against one Ollama model.
 - `slm-benchmark benchmark run`: execute the benchmark matrix.
 - `slm-benchmark report generate`: generate a Markdown report from saved results.
+- `slm-benchmark serve`: start the FastAPI app and Prometheus `/metrics` endpoint.
+- `slm-benchmark metrics export`: backfill Prometheus/Grafana metrics from a saved JSONL result file.
 
