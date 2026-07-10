@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import time
 from collections.abc import Iterator
+from dataclasses import dataclass
 
 import httpx
 
@@ -20,6 +21,12 @@ class OllamaGenerationError(RuntimeError):
         self.elapsed_ms = elapsed_ms
 
 
+@dataclass(frozen=True)
+class StreamChunk:
+    text: str
+    eval_count: int | None = None
+
+
 class OllamaClient:
     def __init__(self, host: str = "http://localhost:11434", timeout_seconds: float = 300.0) -> None:
         self.host = host.rstrip("/")
@@ -30,6 +37,7 @@ class OllamaClient:
         started = time.perf_counter()
         first_token_at: float | None = None
         chunks: list[str] = []
+        eval_count: int | None = None
 
         payload = {
             "model": request.model,
@@ -46,10 +54,13 @@ class OllamaClient:
             with httpx.Client(timeout=self.timeout_seconds) as client:
                 with client.stream("POST", f"{self.host}/api/generate", json=payload) as response:
                     response.raise_for_status()
-                    for token in self._stream_response(response.iter_lines()):
-                        if first_token_at is None:
+                    for chunk in self._stream_response(response.iter_lines()):
+                        if first_token_at is None and chunk.text:
                             first_token_at = time.perf_counter()
-                        chunks.append(token)
+                        if chunk.text:
+                            chunks.append(chunk.text)
+                        if chunk.eval_count is not None:
+                            eval_count = chunk.eval_count
         except httpx.HTTPStatusError as exc:
             elapsed_ms = (time.perf_counter() - started) * 1000
             detail = self._response_detail(exc.response)
@@ -68,13 +79,15 @@ class OllamaClient:
         finished = time.perf_counter()
         raw_response = "".join(chunks)
         total_latency_ms = (finished - started) * 1000
-        output_tokens = self._estimate_tokens(raw_response)
+        estimated_output_tokens = self._estimate_tokens(raw_response)
+        output_tokens = eval_count if eval_count is not None else estimated_output_tokens
         tokens_per_second = output_tokens / max(finished - started, 0.001)
 
         timing = GenerationTiming(
             time_to_first_token_ms=((first_token_at - started) * 1000) if first_token_at else None,
             total_latency_ms=total_latency_ms,
             output_tokens=output_tokens,
+            estimated_output_tokens=estimated_output_tokens,
             tokens_per_second=tokens_per_second,
         )
         return GenerationResponse(
@@ -89,19 +102,21 @@ class OllamaClient:
         return f"{request.prompt.strip()}\n\n{schema_instructions()}"
 
     @staticmethod
-    def _stream_response(lines: Iterator[str]) -> Iterator[str]:
+    def _stream_response(lines: Iterator[str]) -> Iterator[StreamChunk]:
         for line in lines:
             if not line:
                 continue
             data = json.loads(line)
-            if "response" in data:
-                yield data["response"]
+            eval_count = data.get("eval_count")
+            yield StreamChunk(
+                text=data.get("response", ""),
+                eval_count=int(eval_count) if eval_count is not None else None,
+            )
             if data.get("done"):
                 break
 
     @staticmethod
     def _estimate_tokens(text: str) -> int:
-        # Good enough for relative local benchmarks when tokenizer details vary by model.
         return max(1, len(text.split())) if text else 0
 
     @staticmethod
@@ -112,4 +127,3 @@ class OllamaClient:
         except Exception:
             detail = ""
         return detail or response.reason_phrase or "unknown error"
-

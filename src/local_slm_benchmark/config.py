@@ -32,6 +32,9 @@ class BenchmarkConfig(BaseModel):
     results_dir: str = "results"
     reports_dir: str = "reports"
     default_response_schema: str = "assistant_response"
+    quality_scorer: str = "deepeval"
+    judge_model: str | None = None
+    judge_temperature: float = 0.0
 
 
 def project_path(path: str | Path) -> Path:
@@ -65,5 +68,18 @@ def load_benchmark_config(path: str | Path = "config/benchmark.yaml") -> Benchma
         config.reports_dir = reports_dir
     if max_retries := os.getenv("SLM_MAX_RETRIES"):
         config.max_retries = int(max_retries)
+    if quality_scorer := os.getenv("SLM_QUALITY_SCORER"):
+        config.quality_scorer = quality_scorer
+    if judge_model := os.getenv("SLM_JUDGE_MODEL"):
+        config.judge_model = judge_model
+    if judge_temperature := os.getenv("SLM_JUDGE_TEMPERATURE"):
+        config.judge_temperature = float(judge_temperature)
     return config
+
+
+def model_quantization(models_config: ModelsConfig, model_name: str) -> str | None:
+    for model in models_config.models:
+        if model.name == model_name:
+            return model.quantization
+    return None
 

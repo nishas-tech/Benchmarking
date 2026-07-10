@@ -44,6 +44,8 @@ def env() -> None:
     table.add_row("Configured models", ", ".join(model.name for model in models_config.models))
     table.add_row("Prompt file", benchmark_config.prompts_path)
     table.add_row("Results dir", str(project_path(benchmark_config.results_dir)))
+    table.add_row("Quality scorer", benchmark_config.quality_scorer)
+    table.add_row("Judge model", benchmark_config.judge_model or "(first configured model)")
     console.print(table)
 
 
@@ -120,18 +122,26 @@ def benchmark_run(
 @report_app.command("generate")
 def report_generate(
     results: Annotated[Path | None, typer.Option(help="Results JSONL file.")] = None,
+    quality_scorer: Annotated[
+        str | None,
+        typer.Option(help="Quality scorer to use: deepeval or lexical."),
+    ] = None,
 ) -> None:
     """Generate a Markdown report from saved benchmark results."""
 
     from local_slm_benchmark.reporting.report import generate_report
 
-    report_path = generate_report(results_path=results)
+    report_path = generate_report(results_path=results, quality_scorer=quality_scorer)
     console.print(f"[green]Report written to {report_path}[/green]")
 
 
 @metrics_app.command("export")
 def metrics_export(
     results: Annotated[Path | None, typer.Option(help="Results JSONL file. Defaults to latest result file.")] = None,
+    quality_scorer: Annotated[
+        str | None,
+        typer.Option(help="Quality scorer to use: deepeval or lexical."),
+    ] = None,
 ) -> None:
     """Export saved benchmark results into the Prometheus metrics bridge."""
 
@@ -145,7 +155,7 @@ def metrics_export(
     if selected_results is None:
         raise typer.BadParameter("No benchmark result files found.")
 
-    analysis = analyze_results(selected_results)
+    analysis = analyze_results(selected_results, quality_scorer=quality_scorer)
     persist_analysis_summary(analysis.summary)
     console.print(f"[green]Exported analysis metrics from {selected_results}[/green]")
     console.print(f"Metrics bridge file: {METRICS_PATH}")

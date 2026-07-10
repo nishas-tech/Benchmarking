@@ -2,7 +2,55 @@
 
 This project benchmarks local Small Language Models through Ollama and evaluates them across latency, throughput, structured JSON reliability, determinism, quality, and hardware usage.
 
-See `REQUIREMENTS.md` for the project reference architecture and implementation goals.
+See `docs/REQUIREMENTS.md` for the project reference architecture and implementation goals.
+
+## Two-Stage Workflow
+
+This project is designed for a deliberate two-stage workflow:
+
+1. **Benchmark machine**: run the expensive generation matrix and save portable result files.
+2. **Analysis machine**: copy those files over and generate reports, quality scores, and optional Grafana metrics.
+
+That split keeps long-running model comparisons off your daily development machine and makes the benchmark reproducible on stronger hardware.
+
+### Stage 1: Benchmark Machine
+
+```bash
+python -m venv .venv
+python -m pip install -e .
+ollama pull llama3.2:3b
+ollama pull mistral:7b
+ollama pull phi4
+slm-benchmark benchmark run --runs-per-prompt 3
+```
+
+This writes two files per run:
+
+- `results/benchmark-YYYYMMDDTHHMMSSZ.jsonl`
+- `results/benchmark-YYYYMMDDTHHMMSSZ.meta.json`
+
+Copy both files to the analysis machine. The metadata file preserves benchmark-machine hardware, Ollama version, model list, prompt counts, and total benchmark duration.
+
+### Stage 2: Analysis Machine
+
+```bash
+python -m venv .venv
+python -m pip install -e .
+ollama pull llama3.2:3b
+slm-benchmark report generate --results results/benchmark-YYYYMMDDTHHMMSSZ.jsonl
+```
+
+For faster iteration without judge-model calls:
+
+```bash
+slm-benchmark report generate --quality-scorer lexical
+```
+
+Optional post-run metrics export for Grafana:
+
+```bash
+slm-benchmark metrics export --results results/benchmark-YYYYMMDDTHHMMSSZ.jsonl
+```
 
 ## Setup
 
@@ -16,101 +64,89 @@ slm-benchmark prompts validate
 
 ## Smoke Test
 
-Use the smoke test to verify the local project, Ollama connection, JSON validation, result persistence, and report generation with a small run.
-
 ```bash
 slm-benchmark generate --model llama3.2:3b --prompt "Return JSON with a one sentence summary."
 slm-benchmark benchmark run --model llama3.2:3b --limit 2 --runs-per-prompt 1
 slm-benchmark report generate
 ```
 
-The smoke benchmark filters to `llama3.2:3b` because setup only pulls that model. It runs 2 prompts across the configured temperatures and writes a small JSONL result file under `results/`.
+## Benchmark Matrix
 
-## Benchmark Run
-
-For the full comparison, pull every model listed in `config/models.yaml` first:
-
-```bash
-ollama pull llama3.2:3b
-ollama pull mistral:7b
-ollama pull phi4
-```
-
-Then run the full configured benchmark matrix:
-
-```bash
-slm-benchmark benchmark run --runs-per-prompt 3
-slm-benchmark report generate
-```
-
-The full benchmark uses all 50 prompts in `prompts/benchmark_prompts.json`, all configured models, and all configured temperatures. With the default config, that is:
+The full benchmark uses all prompts in `prompts/benchmark_prompts.json`, all configured models, and all configured temperatures. With the default config, that is approximately:
 
 ```text
-3 models x 2 temperatures x 50 prompts x 3 runs = 900 generations
+3 models x 2 temperatures x 55 prompts x 3 runs = 990 generations
 ```
 
-To benchmark only the models installed on your machine, pass one or more `--model` options:
+To benchmark only installed models:
 
 ```bash
 slm-benchmark benchmark run --model llama3.2:3b --model mistral:7b --runs-per-prompt 3
 ```
 
+## DeepEval Quality Scoring
+
+Quality scoring is configured in `config/benchmark.yaml`:
+
+```yaml
+quality_scorer: deepeval
+judge_model: llama3.2:3b
+judge_temperature: 0.0
+```
+
+By default, report generation uses **DeepEval with a local Ollama judge**. The judge is separate from the models being benchmarked. This keeps the evaluation local/private and avoids cloud API costs.
+
+DeepEval produces:
+
+- an overall quality score
+- separate dimension scores for correctness, relevance, completeness, instruction following, and conciseness
+
+Environment overrides:
+
+```bash
+SLM_QUALITY_SCORER=deepeval
+SLM_JUDGE_MODEL=llama3.2:3b
+SLM_JUDGE_TEMPERATURE=0.0
+```
+
+Use `--quality-scorer lexical` when you want a fast deterministic score without judge-model calls.
+
 ## Metrics And Dashboards
 
-Start the FastAPI metrics endpoint in one terminal:
-
-```bash
-slm-benchmark serve --host 0.0.0.0 --port 8000
-```
-
-Start Prometheus and Grafana in another terminal:
-
-```bash
-docker compose -f docker-compose.observability.yml up
-```
-
-Open the dashboards:
-
-- Prometheus: `http://localhost:9090`
-- Grafana: `http://localhost:3000`
-- Grafana login: `admin` / `admin`
-- Dashboard: `Local SLM Benchmarking`
-
-Prometheus scrapes FastAPI at `http://host.docker.internal:8000/metrics`. The benchmark CLI also writes persisted metric snapshots to `results/prometheus-metrics.json`, and the FastAPI `/metrics` endpoint exposes those snapshots so Grafana can show CLI-produced runtime metrics and post-run analysis metrics.
-
-Prometheus does not auto-render a dashboard on the query page. Use Grafana for the visual dashboard, or open the ready-made Prometheus query links in `dashboards/prometheus-queries.md`.
-
-Recommended dashboard flow:
+Grafana is optional and intended for **offline/post-run analysis**, not live production monitoring.
 
 ```bash
 slm-benchmark serve --host 0.0.0.0 --port 8000
 docker compose -f docker-compose.observability.yml up
-slm-benchmark benchmark run --model llama3.2:3b --limit 2 --runs-per-prompt 1
-slm-benchmark report generate
-```
-
-If you already have a benchmark JSONL file and want to populate Grafana without rerunning the benchmark, export the saved results into the metrics bridge:
-
-```bash
 slm-benchmark metrics export --results results/benchmark-YYYYMMDDTHHMMSSZ.jsonl
 ```
 
-Verify the metrics endpoint:
+Open:
 
-```bash
-curl http://localhost:8000/metrics/status
-curl http://localhost:8000/metrics
-```
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3000`
+- Dashboard: `Local SLM Benchmarking`
 
-In Prometheus, check `Status > Targets`. The `local-slm-benchmark` target should be `UP`. If it is down, make sure `slm-benchmark serve --host 0.0.0.0 --port 8000` is still running.
+The analysis machine does not need to rerun the benchmark. `metrics export` reads the saved JSONL file, computes analysis metrics, and exposes them through the metrics bridge consumed by Grafana.
 
 ## Main Commands
 
 - `slm-benchmark env`: print local environment information.
 - `slm-benchmark prompts validate`: validate the benchmark prompt file.
 - `slm-benchmark generate`: run one prompt against one Ollama model.
-- `slm-benchmark benchmark run`: execute the benchmark matrix.
-- `slm-benchmark report generate`: generate a Markdown report from saved results.
+- `slm-benchmark benchmark run`: execute the benchmark matrix on the benchmark machine.
+- `slm-benchmark report generate`: generate a Markdown report from saved results on the analysis machine.
 - `slm-benchmark serve`: start the FastAPI app and Prometheus `/metrics` endpoint.
 - `slm-benchmark metrics export`: backfill Prometheus/Grafana metrics from a saved JSONL result file.
 
+## Report Output
+
+Reports include:
+
+- hardware/environment metadata from the benchmark machine
+- model and prompt context
+- latency, throughput, memory, reliability, and quality sections
+- temperature/determinism comparison
+- separate DeepEval quality dimensions
+- recommended model configurations for interactive, structured, and balanced use cases
+- charts for latency, p95 latency, TTFT, throughput, JSON success, retry rate, memory, and quality vs latency

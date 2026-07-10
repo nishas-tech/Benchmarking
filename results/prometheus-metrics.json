@@ -1,5 +1,28 @@
 {
-  "runtime": {},
+  "runtime": {
+    "test-model|0": {
+      "model": "test-model",
+      "temperature": "0",
+      "benchmark_runs_total": 2,
+      "json_validation_failures_total": 0,
+      "retries_total": 2,
+      "latest_tokens_per_second": 25.0,
+      "latest_generation_latency_ms": 200.0,
+      "latest_time_to_first_token_ms": 10.0,
+      "latest_process_memory_mb": 217.0390625
+    },
+    "missing-model|0": {
+      "model": "missing-model",
+      "temperature": "0",
+      "benchmark_runs_total": 2,
+      "json_validation_failures_total": 2,
+      "retries_total": 0,
+      "latest_tokens_per_second": 0.0,
+      "latest_generation_latency_ms": 12.0,
+      "latest_time_to_first_token_ms": null,
+      "latest_process_memory_mb": 217.05859375
+    }
+  },
   "analysis": [
     {
       "model": "mistral:7b",

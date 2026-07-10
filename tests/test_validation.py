@@ -12,6 +12,8 @@ def test_validate_assistant_response_success() -> None:
     result = validate_assistant_response('{"answer": "ok", "confidence": 0.9, "notes": []}')
 
     assert result.valid_json is True
+    assert result.valid_json_parse is True
+    assert result.valid_schema is True
     assert result.parsed == {"answer": "ok", "confidence": 0.9, "notes": []}
 
 

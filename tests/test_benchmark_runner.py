@@ -21,6 +21,7 @@ class FakeClient:
                 time_to_first_token_ms=10,
                 total_latency_ms=100,
                 output_tokens=5,
+                estimated_output_tokens=5,
                 tokens_per_second=50,
             ),
         )

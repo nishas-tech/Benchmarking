@@ -37,6 +37,7 @@ class GenerationTiming(BaseModel):
     time_to_first_token_ms: float | None = None
     total_latency_ms: float
     output_tokens: int
+    estimated_output_tokens: int | None = None
     tokens_per_second: float
 
 
@@ -50,6 +51,9 @@ class GenerationResponse(BaseModel):
 
 class ValidationResult(BaseModel):
     valid_json: bool
+    valid_json_parse: bool = False
+    valid_schema: bool = False
+    error_category: str | None = None
     parsed: dict[str, Any] | None = None
     errors: list[str] = Field(default_factory=list)
 
@@ -58,6 +62,9 @@ class SystemSnapshot(BaseModel):
     cpu_percent: float | None = None
     memory_mb: float | None = None
     memory_percent: float | None = None
+    gpu_name: str | None = None
+    gpu_memory_used_mb: float | None = None
+    gpu_utilization_percent: float | None = None
 
 
 class BenchmarkResult(BaseModel):
@@ -72,17 +79,29 @@ class BenchmarkResult(BaseModel):
     parsed_response: dict[str, Any] | None = None
     reference_answer: str | None = None
     valid_json: bool
+    valid_json_parse: bool = False
+    valid_schema: bool = False
+    schema_error_category: str | None = None
     validation_errors: list[str] = Field(default_factory=list)
     retry_count: int = 0
+    retry_succeeded: bool = False
     final_failure: str | None = None
     time_to_first_token_ms: float | None = None
+    generation_latency_ms: float | None = None
+    retry_latency_ms: float = 0.0
     total_latency_ms: float
     output_tokens: int
+    estimated_output_tokens: int | None = None
     tokens_per_second: float
+    model_quantization: str | None = None
     cpu_percent: float | None = None
     memory_mb: float | None = None
     memory_percent: float | None = None
+    gpu_name: str | None = None
+    gpu_memory_used_mb: float | None = None
+    gpu_utilization_percent: float | None = None
     quality_score: float | None = None
+    quality_dimensions: dict[str, float] = Field(default_factory=dict)
     variance_score: float | None = None
     extra: dict[str, Any] = Field(default_factory=dict)
 
