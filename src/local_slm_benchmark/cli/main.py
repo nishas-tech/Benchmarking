@@ -28,6 +28,10 @@ app.add_typer(benchmark_app, name="benchmark")
 app.add_typer(report_app, name="report")
 app.add_typer(metrics_app, name="metrics")
 
+@app.command()
+def help(ctx: typer.Context) -> None:
+    """Show help for all commands and subcommands."""
+    typer.echo(ctx.parent.get_help())  # type: ignore[union-attr]
 
 @app.command()
 def env() -> None:

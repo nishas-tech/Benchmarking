@@ -8,6 +8,6 @@ results_dir: "results"
 reports_dir: "reports"
 default_response_schema: "assistant_response"
 quality_scorer: deepeval
-judge_model: llama3.2:3b
+judge_model: qwen3.5:4b
 judge_temperature: 0.0
 

@@ -1,0 +1,45 @@
+{
+  "run_file": "benchmark-20260712T210827Z.jsonl",
+  "started_at": "2026-07-12T21:08:27.367782Z",
+  "finished_at": "2026-07-12T22:55:31.902150Z",
+  "benchmark_duration_ms": 6424585.118,
+  "python_version": "3.14.0",
+  "platform": "macOS-26.5.1-arm64-arm-64bit-Mach-O",
+  "cpu_count": 16,
+  "total_memory_mb": 131072.0,
+  "ollama_host": "http://localhost:11434",
+  "ollama_version": "0.30.10",
+  "models": [
+    "gemma4",
+    "phi4"
+  ],
+  "model_details": [
+    {
+      "name": "phi4",
+      "label": "Phi 4",
+      "quantization": null
+    }
+  ],
+  "temperatures": [
+    0.0,
+    0.7
+  ],
+  "prompt_count": 55,
+  "prompt_categories": {
+    "summarization": 5,
+    "classification": 5,
+    "extraction": 5,
+    "reasoning": 5,
+    "coding": 5,
+    "transformation": 5,
+    "planning": 5,
+    "safety": 5,
+    "reporting": 5,
+    "observability": 5,
+    "comparison": 5
+  },
+  "runs_per_prompt": 3,
+  "case_count": 660,
+  "gpu_name": null,
+  "gpu_memory_total_mb": null
+}

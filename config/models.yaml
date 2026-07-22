@@ -1,12 +1,11 @@
 ollama_host: "http://localhost:11434"
 models:
-  - name: "llama3.2:3b"
-    label: "Llama 3.2 3B"
-    quantization: null
   - name: "mistral:7b"
     label: "Mistral 7B"
     quantization: null
   - name: "phi4"
     label: "Phi 4"
     quantization: null
-
+  - name: "gemma4"
+    label: "Gemma 4"
+    quantization: null
